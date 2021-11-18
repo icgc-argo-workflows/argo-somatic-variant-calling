@@ -1,0 +1,5 @@
+project_name: argo-somatic-variant-calling
+license: MIT
+repo_type: git
+repo_server: github.com
+repo_account: icgc-argo-workflows
