@@ -1,7 +1,10 @@
 {
-    "input_file": "input/test_rg_3.bam",
-    "expected_output": "expected/expected.test_rg_3.bam",
+    "tumourBam": "input/NA12891_demo20.bam",
+    "normalBam": "input/NA12892_demo20.bam",
+    "referenceFa": "input/demo20.fa",
+    "expected_snv_output": "expected/expected.somatic.snvs.vcf.gz",
+    "expected_indel_output": "expected/expected.somatic.indels.vcf.gz",
     "publish_dir": "outdir",
     "cpus": 1,
-    "mem": 0.5
+    "mem": 2
 }

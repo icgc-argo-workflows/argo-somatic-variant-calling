@@ -48,60 +48,96 @@ params.container_version = ""
 params.container = ""
 
 // tool specific parmas go here, add / change as needed
-params.input_file = ""
-params.expected_output = ""
+params.tumourBam = ""
+params.normalBam = ""
+params.referenceFa = ""
+params.isExome = true
+
+params.expected_snv_output = ""
+params.expected_indel_output = ""
 
 include { strelka2 } from '../main'
+include { getSecondaryFiles as getSec } from './wfpr_modules/github.com/icgc-argo-workflows/data-processing-utility-tools/helper-functions@1.0.2/main'
 
 
 process file_smart_diff {
   container "${params.container ?: container[params.container_registry ?: default_container_registry]}:${params.container_version ?: version}"
 
   input:
-    path output_file
-    path expected_file
+    path output_somaticSnvVcf
+    path expected_snv_output
+    path output_somaticIndelVcf
+    path expected_indel_output
 
   output:
     stdout()
 
   script:
     """
-    # Note: this is only for demo purpose, please write your own 'diff' according to your own needs.
-    # in this example, we need to remove date field before comparison eg, <div id="header_filename">Tue 19 Jan 2021<br/>test_rg_3.bam</div>
-    # sed -e 's#"header_filename">.*<br/>test_rg_3.bam#"header_filename"><br/>test_rg_3.bam</div>#'
+    gunzip -c ${output_somaticSnvVcf} \
+      | grep -v '^#' > normalized_output_somaticSnvVcf
 
-    cat ${output_file[0]} \
-      | sed -e 's#"header_filename">.*<br/>#"header_filename"><br/>#' > normalized_output
+    gunzip -c ${expected_snv_output} \
+      | grep -v '^#' > normalized_expected_snv_output
 
-    ([[ '${expected_file}' == *.gz ]] && gunzip -c ${expected_file} || cat ${expected_file}) \
-      | sed -e 's#"header_filename">.*<br/>#"header_filename"><br/>#' > normalized_expected
+    diff normalized_output_somaticSnvVcf normalized_expected_snv_output \
+      && ( echo -n "SNV calls MATCH. " ) || ( echo "Test FAILED, output SNV calls mismatch." && exit 1 )
 
-    diff normalized_output normalized_expected \
-      && ( echo "Test PASSED" && exit 0 ) || ( echo "Test FAILED, output file mismatch." && exit 1 )
+    gunzip -c ${output_somaticIndelVcf} \
+      | grep -v '^#' > normalized_output_somaticIndelVcf
+
+    gunzip -c ${expected_indel_output} \
+      | grep -v '^#' > normalized_expected_indel_output
+
+    diff normalized_output_somaticIndelVcf normalized_expected_indel_output \
+      && ( echo "Indel calls MATCH. Test PASSED" && exit 0 ) || ( echo "Test FAILED, output Indel calls mismatch." && exit 1 )
+
     """
 }
 
 
 workflow checker {
   take:
-    input_file
-    expected_output
+    tumourBam
+    tumourBai
+    normalBam
+    normalBai
+    referenceFa
+    referenceFai
+    isExome
+    expected_snv_output
+    expected_indel_output
 
   main:
     strelka2(
-      input_file
+      tumourBam,
+      tumourBai,
+      normalBam,
+      normalBai,
+      referenceFa,
+      referenceFai,
+      isExome
     )
 
     file_smart_diff(
-      strelka2.out.output_file,
-      expected_output
+      strelka2.out.somaticSnvVcf,
+      expected_snv_output,
+      strelka2.out.somaticIndelVcf,
+      expected_indel_output
     )
 }
 
 
 workflow {
   checker(
-    file(params.input_file),
-    file(params.expected_output)
+    file(params.tumourBam),
+    Channel.fromPath(getSec(params.tumourBam, ['crai', 'bai'])).collect(),
+    file(params.normalBam),
+    Channel.fromPath(getSec(params.normalBam, ['crai', 'bai'])).collect(),
+    file(params.referenceFa),
+    Channel.fromPath(getSec(params.referenceFa, ['fai']), checkIfExists: true).collect(),
+    params.isExome,
+    file(params.expected_snv_output),
+    file(params.expected_indel_output)
   )
 }

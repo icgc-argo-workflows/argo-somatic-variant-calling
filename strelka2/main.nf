@@ -47,10 +47,10 @@ params.cpus = 1
 params.mem = 1  // GB
 params.publish_dir = ""  // set to empty string will disable publishDir
 
-
-// tool specific parmas go here, add / change as needed
-params.input_file = ""
-params.output_pattern = "*"  // output file name pattern
+params.tumourBam = ""
+params.normalBam = ""
+params.referenceFa = ""
+params.isExome = false
 
 
 process strelka2 {
@@ -60,21 +60,38 @@ process strelka2 {
   cpus params.cpus
   memory "${params.mem} GB"
 
-  input:  // input, make update as needed
-    path input_file
+  input:
+    path tumourBam
+    path tumourBai
+    path normalBam
+    path normalBai
+    path referenceFa
+    path referenceFai
+    val isExome
 
-  output:  // output, make update as needed
-    path "output_dir/${params.output_pattern}", emit: output_file
+
+  output:
+    path "output_dir/results/variants/somatic.snvs.vcf.gz", emit: somaticSnvVcf
+    path "output_dir/results/variants/somatic.snvs.vcf.gz.tbi", emit: somaticSnvVcfTbi
+    path "output_dir/results/variants/somatic.indels.vcf.gz", emit: somaticIndelVcf
+    path "output_dir/results/variants/somatic.indels.vcf.gz.tbi", emit: somaticIndelVcfTbi
+    path "output_dir/results/stats/runStats.tsv", emit: runStats
 
   script:
-    // add and initialize variables here as needed
+    arg_exome = isExome == "true" ? "--exome" : ""
 
     """
+    
     mkdir -p output_dir
 
-    main.py \
-      -i ${input_file} \
-      -o output_dir
+    configureStrelkaSomaticWorkflow.py \
+      --tumorBam=${tumourBam} \
+      --normalBam=${normalBam} \
+      --referenceFasta=${referenceFa} \
+      --callMemMb=${params.mem * 1000} \
+      --runDir=./output_dir ${arg_exome}
+
+    ./output_dir/runWorkflow.py -m local -j ${params.cpus} -g ${params.mem}
 
     """
 }
@@ -84,6 +101,12 @@ process strelka2 {
 // using this command: nextflow run <git_acc>/<repo>/<pkg_name>/<main_script>.nf -r <pkg_name>.v<pkg_version> --params-file xxx
 workflow {
   strelka2(
-    file(params.input_file)
+    file(params.tumourBam),
+    Channel.fromPath(getSec(params.tumourBam, ['crai', 'bai'])).collect(),
+    file(params.normalBam),
+    Channel.fromPath(getSec(params.normalBam, ['crai', 'bai'])).collect(),
+    file(params.referenceFa),
+    Channel.fromPath(getSec(params.referenceFa, ['fai']), checkIfExists: true).collect(),
+    params.isExome
   )
 }
