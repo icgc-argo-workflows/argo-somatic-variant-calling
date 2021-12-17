@@ -52,7 +52,6 @@ params.normalBam = ""
 params.referenceFa = ""
 params.isExome = false
 
-
 process strelka2 {
   container "${params.container ?: container[params.container_registry ?: default_container_registry]}:${params.container_version ?: version}"
   publishDir "${params.publish_dir}/${task.process.replaceAll(':', '_')}", mode: "copy", enabled: params.publish_dir
@@ -88,10 +87,10 @@ process strelka2 {
       --tumorBam=${tumourBam} \
       --normalBam=${normalBam} \
       --referenceFasta=${referenceFa} \
-      --callMemMb=${params.mem * 1000} \
+      --callMemMb=${Math.round(params.mem * 1000 / params.cpus)} \
       --runDir=./output_dir ${arg_exome}
 
-    ./output_dir/runWorkflow.py -m local -j ${params.cpus} -g ${params.mem}
+    ./output_dir/runWorkflow.py -m local -j ${params.cpus}
 
     """
 }
@@ -100,13 +99,16 @@ process strelka2 {
 // this provides an entry point for this main script, so it can be run directly without clone the repo
 // using this command: nextflow run <git_acc>/<repo>/<pkg_name>/<main_script>.nf -r <pkg_name>.v<pkg_version> --params-file xxx
 workflow {
+  tumourIdx = params.tumourBam.endsWith('.bam') ? params.tumourBam + '.bai' : params.tumourBam + '.crai'
+  normalIdx = params.normalBam.endsWith('.bam') ? params.normalBam + '.bai' : params.normalBam + '.crai'
+
   strelka2(
     file(params.tumourBam),
-    Channel.fromPath(getSec(params.tumourBam, ['crai', 'bai'])).collect(),
+    file(tumourIdx),
     file(params.normalBam),
-    Channel.fromPath(getSec(params.normalBam, ['crai', 'bai'])).collect(),
+    file(normalIdx),
     file(params.referenceFa),
-    Channel.fromPath(getSec(params.referenceFa, ['fai']), checkIfExists: true).collect(),
+    file(params.referenceFa + '.fai'),
     params.isExome
   )
 }
