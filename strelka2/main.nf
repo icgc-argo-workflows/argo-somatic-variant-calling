@@ -52,6 +52,8 @@ params.normalBam = ""
 params.referenceFa = ""
 params.isExome = false
 
+include { getSecondaryFiles as getSec } from './wfpr_modules/github.com/icgc-argo-workflows/data-processing-utility-tools/helper-functions@1.0.2/main'
+
 process strelka2 {
   container "${params.container ?: container[params.container_registry ?: default_container_registry]}:${params.container_version ?: version}"
   publishDir "${params.publish_dir}/${task.process.replaceAll(':', '_')}", mode: "copy", enabled: params.publish_dir
@@ -101,6 +103,7 @@ process strelka2 {
 workflow {
   tumourIdx = params.tumourBam.endsWith('.bam') ? params.tumourBam + '.bai' : params.tumourBam + '.crai'
   normalIdx = params.normalBam.endsWith('.bam') ? params.normalBam + '.bai' : params.normalBam + '.crai'
+  referenceIdx = params.referenceFa.endsWith('.fa.gz') ? getSec(params.referenceFa, ['fai', 'gzi']) : getSec(params.referenceFa, ['fai'])
 
   strelka2(
     file(params.tumourBam),
@@ -108,7 +111,7 @@ workflow {
     file(params.normalBam),
     file(normalIdx),
     file(params.referenceFa),
-    file(params.referenceFa + '.fai'),
+    Channel.fromPath(referenceIdx, checkIfExists: true).collect(),
     params.isExome
   )
 }

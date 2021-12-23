@@ -57,6 +57,7 @@ params.expected_snv_output = ""
 params.expected_indel_output = ""
 
 include { strelka2 } from '../main'
+include { getSecondaryFiles as getSec } from './wfpr_modules/github.com/icgc-argo-workflows/data-processing-utility-tools/helper-functions@1.0.2/main'
 
 
 process file_smart_diff {
@@ -130,6 +131,7 @@ workflow checker {
 workflow {
   tumourIdx = params.tumourBam.endsWith('.bam') ? params.tumourBam + '.bai' : params.tumourBam + '.crai'
   normalIdx = params.normalBam.endsWith('.bam') ? params.normalBam + '.bai' : params.normalBam + '.crai'
+  referenceIdx = params.referenceFa.endsWith('.fa.gz') ? getSec(params.referenceFa, ['fai', 'gzi']) : getSec(params.referenceFa, ['fai'])
 
   checker(
     file(params.tumourBam),
@@ -137,7 +139,7 @@ workflow {
     file(params.normalBam),
     file(normalIdx),
     file(params.referenceFa),
-    file(params.referenceFa + '.fai'),
+    Channel.fromPath(referenceIdx, checkIfExists: true).collect(),
     params.isExome,
     file(params.expected_snv_output),
     file(params.expected_indel_output)
