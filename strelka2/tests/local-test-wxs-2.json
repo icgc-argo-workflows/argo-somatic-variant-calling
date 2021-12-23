@@ -1,0 +1,11 @@
+{
+    "tumourBam": "https://object.cancercollaboratory.org:9080/swift/v1/genomics-public-data/benchmark-datasets/TCRB-CA/DO262483/WXS/sequencing_alignment/tumour/TCRB-CA.DO262483.SA622771.wxs.20211126.aln.cram",
+    "normalBam": "https://object.cancercollaboratory.org:9080/swift/v1/genomics-public-data/benchmark-datasets/TCRB-CA/DO262483/WXS/sequencing_alignment/normal/TCRB-CA.DO262483.SA622770.wxs.20211126.aln.cram",
+    "isExome": true,
+    "referenceFa": "https://object.cancercollaboratory.org:9080/swift/v1/genomics-public-data/reference-genome/GRCh38_hla_decoy_ebv/GRCh38_hla_decoy_ebv.fa.gz",
+    "expected_snv_output": "https://object.cancercollaboratory.org:9080/swift/v1/genomics-public-data/benchmark-datasets/TCRB-CA/DO262483/WXS/variant_calling/tumour/TCRB-CA.DO262483.SA622771.wxs.20211217.strelka2.somatic.snv.vcf.gz",
+    "expected_indel_output": "https://object.cancercollaboratory.org:9080/swift/v1/genomics-public-data/benchmark-datasets/TCRB-CA/DO262483/WXS/variant_calling/tumour/TCRB-CA.DO262483.SA622771.wxs.20211217.strelka2.somatic.indel.vcf.gz",
+    "publish_dir": "outdir",
+    "cpus": 12,
+    "mem": 4
+}

@@ -1,0 +1,40 @@
+{
+    "name": "strelka2",
+    "version": "0.1.0",
+    "description": "Strelka2 Small Variant Caller",
+    "main": "main.nf",
+    "deprecated": false,
+    "keywords": [
+        "bioinformatics",
+        "genomics",
+        "variant caller",
+        "ngs"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/icgc-argo-workflows/argo-somatic-variant-calling.git"
+    },
+    "container": {
+        "registries": [
+            {
+                "registry": "ghcr.io",
+                "type": "docker",
+                "org": "icgc-argo-workflows",
+                "default": true
+            }
+        ]
+    },
+    "dependencies": [
+         "github.com/icgc-argo-workflows/data-processing-utility-tools/helper-functions@1.0.2"
+    ],
+    "devDependencies": [],
+    "contributors": [
+        {
+            "name": "Junjun Zhang",
+            "email": "junjun.ca@gmail.com"
+        }
+    ],
+    "license": "MIT",
+    "bugReport": "https://github.com/icgc-argo-workflows/argo-somatic-variant-calling/issues",
+    "homepage": "https://github.com/icgc-argo-workflows/argo-somatic-variant-calling#readme"
+}
